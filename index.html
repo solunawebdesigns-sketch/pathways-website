@@ -424,6 +424,7 @@ footer{background:var(--text);padding:64px 52px 32px;}
         </div>
         <div class="cal-grid" id="cal-grid"></div>
         <div class="upcoming-list">
+          <!-- ==UPCOMING_START== -->
           <div class="upcoming-label">Upcoming Events</div>
           <div class="upcoming-item" style="background:rgba(224,92,42,.1);border-color:#e05c2a;"><div><div class="upcoming-num" style="color:#e05c2a;">Jun 15–<br>Jul 31</div></div><div><div class="upcoming-title">Community Food Drive</div><div class="upcoming-detail">Drop-off location TBD · Free · All welcome</div></div></div>
           <div class="upcoming-item" style="background:var(--blue-pale);border-color:var(--blue);"><div><div class="upcoming-num" style="color:var(--blue-dk);">Sep<br>TBD</div></div><div><div class="upcoming-title">Pathways 5K Run</div><div class="upcoming-detail">Fort Worth · Date TBD · Stay tuned!</div></div></div>
@@ -690,6 +691,7 @@ footer{background:var(--text);padding:64px 52px 32px;}
     <div class="fcopy">© 2026 Pathways to Wellness · Fort Worth, TX · Youth-Led Nonprofit</div>
     <div class="fbuilt">Website by <span>Soluna Web Designs</span> · Weatherford, TX</div>
   </div>
+<a href="#" onclick="event.preventDefault();showPage('admin');" style="font-size:11px;color:rgba(255,255,255,.18);text-decoration:none;letter-spacing:.06em;font-family:Inter,sans-serif;">Staff</a>
 </footer>
 
 <script>
@@ -701,6 +703,8 @@ footer{background:var(--text);padding:64px 52px 32px;}
     var t = document.getElementById('page-' + p);
     if (t) { t.classList.add('active'); window.scrollTo({top:0,behavior:'smooth'}); setTimeout(observeAll,80); if (p === 'recipes' && typeof recShowCats === 'function') { recShowCats(); } }
   }
+
+  window.showPage = showPage;
 
   // Menu
   function toggleMenu() {
@@ -729,6 +733,7 @@ footer{background:var(--text);padding:64px 52px 32px;}
   // Calendar
   var _now = new Date(); var cY = _now.getFullYear(), cM = _now.getMonth();
   // Event definitions
+  /* ==EVENTS_START== */
   var EVENTS = [
     { type:'food-drive', label:'Food Drive',    color:'#e05c2a', bg:'rgba(224,92,42,.13)',
       start: new Date(2026,5,15), end: new Date(2026,6,31) },
@@ -737,6 +742,7 @@ footer{background:var(--text);padding:64px 52px 32px;}
     { type:'5k',         label:'5K Run · Date TBD', color:'var(--blue-dk)', bg:'rgba(82,138,188,.13)',
       month: 9 /* October */ }
   ];
+  /* ==EVENTS_END== */
 
   function getDayEvents(year, month, day) {
     var result = [];
@@ -1292,5 +1298,229 @@ var recState = {cat: null};
   document.addEventListener('DOMContentLoaded', function() { recUpdateCounts(); recShowCats(); });
   if (document.readyState !== 'loading') recUpdateCounts();
 </script>
+
+
+<!-- ══════════ ADMIN EDITOR ══════════ -->
+<div id="page-admin" class="page">
+  <div style="height:70px;"></div>
+  <div style="max-width:780px;margin:0 auto;padding:40px 28px 80px;">
+    <div id="admin-lock" style="text-align:center;padding:80px 0;">
+      <div style="font-size:48px;margin-bottom:16px;">🔒</div>
+      <div style="font-family:'Playfair Display',serif;font-size:28px;color:var(--text);margin-bottom:8px;">Site Editor</div>
+      <div style="font-size:14px;color:var(--mid);margin-bottom:32px;">Enter your password to edit site content</div>
+      <input id="admin-pw-input" type="password" placeholder="Password" style="border:1px solid rgba(82,188,138,.3);border-radius:12px;padding:12px 20px;font-size:15px;font-family:Inter,sans-serif;outline:none;width:260px;text-align:center;display:block;margin:0 auto 12px;">
+      <div id="admin-pw-error" style="color:#c0392b;font-size:13px;margin-bottom:12px;display:none;">Wrong password. Try again.</div>
+      <button onclick="adminUnlock()" style="background:var(--green);color:white;border:none;border-radius:100px;padding:12px 32px;font-size:14px;font-weight:600;cursor:pointer;font-family:Inter,sans-serif;">Unlock</button>
+    </div>
+    <div id="admin-editor" style="display:none;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:40px;flex-wrap:wrap;gap:16px;">
+        <div>
+          <div style="font-family:'Playfair Display',serif;font-size:32px;color:var(--text);margin-bottom:4px;">✏️ Site Editor</div>
+          <div style="font-size:13px;color:var(--mid);">Make your changes below, then click <strong>Save &amp; Download</strong>. Upload the downloaded file to Cloudflare to go live.</div>
+        </div>
+        <button id="admin-save-btn" onclick="adminSave()" style="background:var(--green);color:white;border:none;border-radius:100px;padding:14px 32px;font-size:14px;font-weight:700;cursor:pointer;font-family:Inter,sans-serif;">⬇ Save &amp; Download Site</button>
+      </div>
+
+      <div class="admin-section">
+        <div class="admin-section-title">📅 Upcoming Events</div>
+        <div style="font-size:13px;color:var(--mid);margin-bottom:20px;">These appear on the Events page under the calendar.</div>
+        <div id="admin-events-list" style="display:flex;flex-direction:column;gap:20px;"></div>
+        <button onclick="adminAddEvent()" style="margin-top:16px;background:none;border:1px dashed rgba(82,188,138,.4);color:var(--green-dk);border-radius:12px;padding:10px 20px;font-size:13px;font-weight:600;cursor:pointer;font-family:Inter,sans-serif;width:100%;">+ Add Event</button>
+      </div>
+
+      <div class="admin-section">
+        <div class="admin-section-title">🍊 Food Drive</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+          <div><label class="admin-label">Start Date</label><input id="fd-start" type="date" class="admin-input"></div>
+          <div><label class="admin-label">End Date</label><input id="fd-end" type="date" class="admin-input"></div>
+          <div style="grid-column:1/-1;"><label class="admin-label">Drop-off Location</label><input id="fd-location" type="text" class="admin-input" placeholder="e.g. 123 Main St, Fort Worth"></div>
+        </div>
+      </div>
+
+      <div class="admin-section">
+        <div class="admin-section-title">🏃 5K Run Dates</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+          <div><label class="admin-label">5K Run #1 Date</label><input id="5k-1" type="date" class="admin-input"><div style="font-size:12px;color:var(--lt);margin-top:4px;">Leave blank if not yet confirmed</div></div>
+          <div><label class="admin-label">5K Run #2 Date</label><input id="5k-2" type="date" class="admin-input"><div style="font-size:12px;color:var(--lt);margin-top:4px;">Leave blank if not yet confirmed</div></div>
+        </div>
+      </div>
+
+      <div class="admin-section">
+        <div class="admin-section-title">📬 Contact Info</div>
+        <div style="display:flex;flex-direction:column;gap:14px;">
+          <div><label class="admin-label">Email Address</label><input id="contact-email" type="email" class="admin-input" placeholder="PathwaysToWellnessFTW@gmail.com"></div>
+          <div><label class="admin-label">Instagram Handle</label><input id="contact-ig" type="text" class="admin-input" placeholder="@pathwaystowellnessftw"></div>
+        </div>
+      </div>
+
+      <div class="admin-section">
+        <div class="admin-section-title">🍽️ Recipe Month Tags</div>
+        <div style="font-size:13px;color:var(--mid);margin-bottom:16px;">Update the month label shown on each recipe card.</div>
+        <div style="display:flex;flex-direction:column;gap:14px;">
+          <div><label class="admin-label">Veggie Sauce Pasta</label><input id="tag-pasta" type="text" class="admin-input" placeholder="March · Meal of the Month"></div>
+          <div><label class="admin-label">Fresh Street Tacos</label><input id="tag-tacos" type="text" class="admin-input" placeholder="February · Meal of the Month"></div>
+          <div><label class="admin-label">Banana Oat Pancakes</label><input id="tag-pancakes" type="text" class="admin-input" placeholder="May · Meal of the Month"></div>
+        </div>
+      </div>
+
+      <div style="text-align:center;padding-top:20px;">
+        <button onclick="adminSave()" style="background:var(--green);color:white;border:none;border-radius:100px;padding:16px 48px;font-size:15px;font-weight:700;cursor:pointer;font-family:Inter,sans-serif;">⬇ Save &amp; Download Updated Site</button>
+        <div style="font-size:12px;color:var(--lt);margin-top:12px;">Downloads a new index.html — upload it to Cloudflare to publish your changes.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+.admin-section{background:var(--white);border-radius:20px;border:1px solid rgba(82,188,138,.14);padding:32px;margin-bottom:24px;box-shadow:0 4px 20px rgba(82,188,138,.06);}
+.admin-section-title{font-family:'Playfair Display',serif;font-size:20px;color:var(--text);margin-bottom:20px;padding-bottom:12px;border-bottom:2px solid var(--green-mid);}
+.admin-label{display:block;font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--mid);margin-bottom:6px;}
+.admin-input{width:100%;border:1px solid rgba(82,188,138,.25);border-radius:10px;padding:10px 14px;font-size:14px;font-family:Inter,sans-serif;color:var(--text);outline:none;box-sizing:border-box;transition:border .2s;}
+.admin-input:focus{border-color:var(--green);}
+.admin-event-card{background:var(--cream);border-radius:14px;padding:20px;border:1px solid rgba(82,188,138,.12);}
+</style>
+<script>
+(function(){
+  var PW = 'pathways2026';
+  var evData = [];
+
+  function pad(n){ return n < 10 ? '0'+n : ''+n; }
+  function esc(s){ return (s||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;'); }
+  function fmtDate(d){ return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate()); }
+
+  window.adminUnlock = function(){
+    if(document.getElementById('admin-pw-input').value === PW){
+      document.getElementById('admin-lock').style.display='none';
+      document.getElementById('admin-editor').style.display='block';
+      adminInit();
+    } else {
+      document.getElementById('admin-pw-error').style.display='block';
+    }
+  };
+
+  document.addEventListener('keydown',function(e){
+    if(e.key==='Enter' && document.activeElement===document.getElementById('admin-pw-input')) window.adminUnlock();
+  });
+
+  function adminInit(){
+    // Upcoming events from DOM
+    evData=[];
+    document.querySelectorAll('.upcoming-item').forEach(function(el){
+      var t=el.querySelector('.upcoming-title'), d=el.querySelector('.upcoming-detail'), n=el.querySelector('.upcoming-num');
+      evData.push({title:t?t.textContent:'', detail:d?d.textContent:'', date:n?n.textContent.trim():''});
+    });
+    renderCards();
+
+    // Food drive dates
+    if(typeof EVENTS!=='undefined') EVENTS.forEach(function(ev){
+      if(ev.type==='food-drive' && ev.start){
+        document.getElementById('fd-start').value=fmtDate(ev.start);
+        document.getElementById('fd-end').value=fmtDate(ev.end);
+      }
+    });
+
+    // Contact email
+    var ml=document.querySelector('a[href^="mailto:"]');
+    if(ml) document.getElementById('contact-email').value=ml.href.replace('mailto:','');
+
+    // Recipe tags
+    if(typeof RECIPE_DATA!=='undefined') RECIPE_DATA.meals.items.forEach(function(item){
+      var el=document.getElementById('tag-'+item.id);
+      if(el) el.value=item.tag;
+    });
+  }
+
+  function renderCards(){
+    var list=document.getElementById('admin-events-list');
+    list.innerHTML='';
+    evData.forEach(function(ev,i){
+      var d=document.createElement('div');
+      d.className='admin-event-card';
+      d.innerHTML='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;"><div style="font-size:13px;font-weight:700;color:var(--green-dk);">Event '+(i+1)+'</div><button onclick="adminRemove('+i+')" style="background:none;border:none;color:#c0392b;cursor:pointer;font-size:18px;">✕</button></div>'
+        +'<div style="display:grid;grid-template-columns:1fr 2fr;gap:12px;">'
+        +'<div><label class="admin-label">Date Label</label><input class="admin-input" id="ev-date-'+i+'" value="'+esc(ev.date)+'" placeholder="e.g. Jun 15–Jul 31"></div>'
+        +'<div><label class="admin-label">Event Title</label><input class="admin-input" id="ev-title-'+i+'" value="'+esc(ev.title)+'" placeholder="Event name"></div>'
+        +'<div style="grid-column:1/-1;"><label class="admin-label">Details</label><input class="admin-input" id="ev-detail-'+i+'" value="'+esc(ev.detail)+'" placeholder="Fort Worth \xb7 Free \xb7 All welcome"></div>'
+        +'</div>';
+      list.appendChild(d);
+    });
+  }
+
+  function collectEvents(){
+    var out=[];
+    for(var i=0;i<evData.length;i++){
+      out.push({
+        date:(document.getElementById('ev-date-'+i)||{}).value||'',
+        title:(document.getElementById('ev-title-'+i)||{}).value||'',
+        detail:(document.getElementById('ev-detail-'+i)||{}).value||''
+      });
+    }
+    return out;
+  }
+
+  window.adminAddEvent=function(){ evData.push({title:'',detail:'',date:''}); renderCards(); };
+  window.adminRemove=function(i){ collectEvents().forEach(function(ev,j){ evData[j]=ev; }); evData.splice(i,1); renderCards(); };
+
+  window.adminSave=function(){
+    var events=collectEvents();
+    var fdStart=document.getElementById('fd-start').value;
+    var fdEnd=document.getElementById('fd-end').value;
+    var fdLoc=document.getElementById('fd-location').value||'Drop-off location TBD';
+    var k1=document.getElementById('5k-1').value;
+    var k2=document.getElementById('5k-2').value;
+    var email=document.getElementById('contact-email').value;
+    var tagP=document.getElementById('tag-pasta').value;
+    var tagT=document.getElementById('tag-tacos').value;
+    var tagK=document.getElementById('tag-pancakes').value;
+
+    // Build upcoming HTML (no literal newlines — join with \n at end)
+    var colors=['background:rgba(224,92,42,.1);border-color:#e05c2a;','background:var(--blue-pale);border-color:var(--blue);','background:var(--blue-pale);border-color:var(--blue);','background:var(--yellow);border-color:var(--yellow-acc);'];
+    var ncolors=['color:#e05c2a;','color:var(--blue-dk);','color:var(--blue-dk);','color:#8a6d00;'];
+    var upLines=['          <!-- ==UPCOMING_START== -->','          <div class="upcoming-label">Upcoming Events</div>'];
+    events.forEach(function(ev,i){
+      var c=colors[Math.min(i,colors.length-1)], nc=ncolors[Math.min(i,ncolors.length-1)];
+      upLines.push('          <div class="upcoming-item" style="'+c+'"><div><div class="upcoming-num" style="'+nc+'">'+ev.date+'</div></div><div><div class="upcoming-title">'+ev.title+'</div><div class="upcoming-detail">'+ev.detail+'</div></div></div>');
+    });
+    var newUpcoming=upLines.join('\n');
+
+    // Build EVENTS JS
+    function jd(str){ var p=str.split('-'); return 'new Date('+p[0]+','+(parseInt(p[1])-1)+','+p[2]+')'; }
+    var evJS='  var EVENTS = [\n';
+    evJS+='    { type:\'food-drive\', label:\'Food Drive\', detail:\''+fdLoc.replace(/\\/g,'\\\\').replace(/'/g,'\\\'')+ '\', color:\'#e05c2a\', bg:\'rgba(224,92,42,.13)\', start: '+(fdStart?jd(fdStart):'new Date(2026,5,15)')+', end: '+(fdEnd?jd(fdEnd):'new Date(2026,6,31)')+' }';
+    if(k1){ var p=k1.split('-'); evJS+=',\n    { type:\'5k\', label:\'5K Run\', color:\'var(--blue-dk)\', bg:\'rgba(82,138,188,.13)\', start: '+jd(k1)+', end: '+jd(k1)+' }'; }
+    else   { evJS+=',\n    { type:\'5k\', label:\'5K Run \xb7 Date TBD\', color:\'var(--blue-dk)\', bg:\'rgba(82,138,188,.13)\', month: 8 }'; }
+    if(k2){ evJS+=',\n    { type:\'5k\', label:\'5K Run\', color:\'var(--blue-dk)\', bg:\'rgba(82,138,188,.13)\', start: '+jd(k2)+', end: '+jd(k2)+' }'; }
+    else   { evJS+=',\n    { type:\'5k\', label:\'5K Run \xb7 Date TBD\', color:\'var(--blue-dk)\', bg:\'rgba(82,138,188,.13)\', month: 9 }'; }
+    evJS+='\n  ]';
+
+    fetch(location.href)
+      .then(function(r){ return r.text(); })
+      .then(function(html){
+        // Replace EVENTS block
+        html=html.replace(/\/\* ==EVENTS_START== \*\/[\s\S]*?\/\* ==EVENTS_END== \*\//,'/* ==EVENTS_START== */\n'+evJS+';\n  /* ==EVENTS_END== */');
+        // Replace upcoming HTML block
+        var upRe=new RegExp('[ ]*<!-- ==UPCOMING_START== -->[\\s\\S]*?<!-- ==UPCOMING_END== -->');
+        html=html.replace(upRe,newUpcoming+'\n          <!-- ==UPCOMING_END== -->');
+        // Update email
+        if(email){ html=html.replace(/mailto:[^\s"'<]+/g,'mailto:'+email); html=html.replace(/PathwaysToWellnessFTW@gmail\.com/g,email); }
+        // Update recipe tags
+        function replaceTag(id,val){ if(!val) return; var re=new RegExp("(id: '"+id+"',[\\s\\S]{0,300}?tag: ')[^']*'"); html=html.replace(re,'$1'+val.replace(/'/g,"\\'")+"\\'"); }
+        if(tagP) replaceTag('pasta',tagP);
+        if(tagT) replaceTag('tacos',tagT);
+        if(tagK) replaceTag('pancakes',tagK);
+
+        var blob=new Blob([html],{type:'text/html'});
+        var a=document.createElement('a');
+        a.href=URL.createObjectURL(blob);
+        a.download='index.html';
+        document.body.appendChild(a); a.click(); document.body.removeChild(a);
+        var btn=document.getElementById('admin-save-btn');
+        if(btn){ btn.textContent='✓ Downloaded!'; btn.style.background='#27ae60'; setTimeout(function(){ btn.textContent='⬇ Save & Download Site'; btn.style.background=''; },3000); }
+      })
+      .catch(function(){ alert('Error: open this page from the live hosted site (not a local file) to use the editor.'); });
+  };
+})();
+</script>
+
 </body>
 </html>
